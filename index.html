@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Turn the bricks you already own into something new. Upload a photo, identify your brick inventory, and discover build ideas." />
+  <title>Brickwise AI — Build More With the Bricks You Own</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Brickwise AI home">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <span>Brickwise <strong>AI</strong></span>
+    </a>
+    <nav class="desktop-nav" aria-label="Primary navigation">
+      <a href="#how-it-works">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#roadmap">Roadmap</a>
+    </nav>
+    <a class="button button-small button-secondary" href="#waitlist">Join beta</a>
+  </header>
+
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy">
+        <div class="eyebrow">AI inventory scanner for building bricks</div>
+        <h1>Build more with the bricks you already own.</h1>
+        <p class="hero-subtitle">
+          Photograph your loose bricks, create a digital inventory, and discover models you can build without buying a new set.
+        </p>
+        <form class="waitlist-form hero-form" data-waitlist-form data-source="hero">
+          <label class="sr-only" for="hero-email">Email address</label>
+          <input id="hero-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+          <button class="button button-primary" type="submit">Get early access</button>
+          <input class="honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <label class="consent-line"><input name="consent" type="checkbox" required /> <span>I agree to receive beta updates and accept the <a href="privacy.html">privacy notice</a>.</span></label>
+        </form>
+        <p class="form-note">Free beta. No spam. Built for brick hobbyists.</p>
+        <div class="trust-row" aria-label="Product benefits">
+          <span>✓ Photo-based inventory</span>
+          <span>✓ Build recommendations</span>
+          <span>✓ Exportable parts list</span>
+        </div>
+      </div>
+
+      <div class="product-card" aria-label="Product demonstration mockup">
+        <div class="product-topbar">
+          <div class="window-dots"><span></span><span></span><span></span></div>
+          <span class="mock-label">Inventory scan</span>
+          <span class="status-pill"><i></i> Ready</span>
+        </div>
+        <div class="scan-area">
+          <div class="photo-stage" aria-label="Illustration of loose building bricks">
+            <div class="scan-grid"></div>
+            <div class="brick brick-red b1"></div>
+            <div class="brick brick-blue b2"></div>
+            <div class="brick brick-yellow b3"></div>
+            <div class="brick brick-green b4"></div>
+            <div class="brick brick-purple b5"></div>
+            <div class="scan-line"></div>
+            <span class="detection-tag tag-one">2 × 4 brick</span>
+            <span class="detection-tag tag-two">1 × 2 plate</span>
+          </div>
+          <div class="result-panel">
+            <div class="result-header">
+              <div>
+                <span class="mini-label">Detected inventory</span>
+                <strong>42 pieces</strong>
+              </div>
+              <span class="accuracy">92% confidence</span>
+            </div>
+            <div class="part-row"><span class="part-swatch red"></span><span>2 × 4 Brick</span><strong>× 12</strong></div>
+            <div class="part-row"><span class="part-swatch blue"></span><span>1 × 2 Plate</span><strong>× 9</strong></div>
+            <div class="part-row"><span class="part-swatch yellow"></span><span>2 × 2 Brick</span><strong>× 8</strong></div>
+            <div class="part-row muted"><span class="part-swatch green"></span><span>Other pieces</span><strong>× 13</strong></div>
+            <button class="mock-button" type="button">Find builds I can make →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="proof-strip" aria-label="Core value proposition">
+      <div><strong>Less sorting.</strong><span>Scan pieces from photos.</span></div>
+      <div><strong>Less waste.</strong><span>Reuse the bricks you own.</span></div>
+      <div><strong>More building.</strong><span>Discover realistic projects.</span></div>
+    </section>
+
+    <section id="how-it-works" class="content-section section-shell">
+      <div class="section-heading">
+        <span class="eyebrow">How it works</span>
+        <h2>From a messy pile to your next build.</h2>
+        <p>The first version focuses on one practical job: turning loose pieces into a useful inventory.</p>
+      </div>
+      <div class="steps-grid">
+        <article class="step-card">
+          <span class="step-number">01</span>
+          <div class="step-icon camera-icon" aria-hidden="true"></div>
+          <h3>Take a photo</h3>
+          <p>Spread your pieces on a table and photograph them with your phone.</p>
+        </article>
+        <article class="step-card">
+          <span class="step-number">02</span>
+          <div class="step-icon scan-icon" aria-hidden="true"></div>
+          <h3>Review the scan</h3>
+          <p>AI detects piece type, dimensions, and color. You can correct uncertain matches.</p>
+        </article>
+        <article class="step-card">
+          <span class="step-number">03</span>
+          <div class="step-icon build-icon" aria-hidden="true"></div>
+          <h3>Find something to build</h3>
+          <p>Match your inventory with compatible projects and see exactly what is missing.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="features" class="content-section feature-section">
+      <div class="section-shell feature-layout">
+        <div class="section-heading left-heading">
+          <span class="eyebrow">Designed around the real problem</span>
+          <h2>Your bricks are useful. Your inventory is invisible.</h2>
+          <p>Brickwise AI converts physical pieces into structured data that can power recommendations, instructions, and future original designs.</p>
+          <a class="text-link" href="#waitlist">Become an early tester <span>→</span></a>
+        </div>
+        <div class="feature-grid">
+          <article>
+            <span class="feature-symbol">◫</span>
+            <h3>Smart inventory</h3>
+            <p>Save counts, colors, dimensions, and corrections in one reusable collection.</p>
+          </article>
+          <article>
+            <span class="feature-symbol">⌁</span>
+            <h3>Build matching</h3>
+            <p>Rank projects by how much of your existing inventory they can use.</p>
+          </article>
+          <article>
+            <span class="feature-symbol">⇩</span>
+            <h3>Clean export</h3>
+            <p>Download your parts list as CSV for spreadsheets and compatible tools.</p>
+          </article>
+          <article>
+            <span class="feature-symbol">△</span>
+            <h3>Transparent confidence</h3>
+            <p>See uncertain detections instead of receiving a misleading “perfect” answer.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap" class="content-section section-shell">
+      <div class="section-heading">
+        <span class="eyebrow">Product roadmap</span>
+        <h2>Start useful. Grow into a design platform.</h2>
+      </div>
+      <div class="roadmap-list">
+        <article class="roadmap-item active">
+          <span>Now</span>
+          <div><h3>Photo → inventory</h3><p>Identify loose pieces, review matches, and export the result.</p></div>
+        </article>
+        <article class="roadmap-item">
+          <span>Next</span>
+          <div><h3>Inventory → compatible builds</h3><p>Recommend models based on available pieces and missing-part count.</p></div>
+        </article>
+        <article class="roadmap-item">
+          <span>Later</span>
+          <div><h3>Original AI-assisted designs</h3><p>Generate stable, buildable creations constrained by the user’s inventory.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="validation-section section-shell">
+      <div class="validation-card">
+        <div>
+          <span class="eyebrow">Help shape the beta</span>
+          <h2>What is your biggest problem with loose bricks?</h2>
+          <p>Your answer directly determines which feature gets built first.</p>
+        </div>
+        <form id="research-form" class="research-form">
+          <label>
+            <span>Primary problem</span>
+            <select name="problem" required>
+              <option value="">Choose one</option>
+              <option>Identifying individual pieces</option>
+              <option>Tracking my inventory</option>
+              <option>Finding builds I can make</option>
+              <option>Knowing which pieces I am missing</option>
+              <option>Creating my own models</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>
+            <span>How many loose pieces do you have?</span>
+            <select name="collectionSize" required>
+              <option value="">Choose a range</option>
+              <option>Fewer than 100</option>
+              <option>100–500</option>
+              <option>500–2,000</option>
+              <option>2,000–10,000</option>
+              <option>More than 10,000</option>
+            </select>
+          </label>
+          <label class="full-width">
+            <span>What would make this product valuable to you?</span>
+            <textarea name="feedback" rows="4" placeholder="Tell us about your current workflow or frustration." required></textarea>
+          </label>
+          <label class="full-width optional-email"><span>Email for follow-up (optional)</span><input name="email" type="email" autocomplete="email" placeholder="you@example.com" /></label>
+          <input class="honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <label class="full-width consent-line"><input name="consent" type="checkbox" required /> <span>I agree that this feedback may be stored and analyzed under the <a href="privacy.html">privacy notice</a>.</span></label>
+          <button class="button button-dark" type="submit">Submit feedback</button>
+          <p class="form-status" id="research-status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="waitlist" class="cta-section">
+      <div class="section-shell cta-inner">
+        <span class="eyebrow light">Private beta</span>
+        <h2>Turn your brick pile into possibilities.</h2>
+        <p>Join the waitlist and help test the first inventory scanner.</p>
+        <form class="waitlist-form bottom-form" data-waitlist-form data-source="footer">
+          <label class="sr-only" for="bottom-email">Email address</label>
+          <input id="bottom-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+          <button class="button button-light" type="submit">Join the waitlist</button>
+          <input class="honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <label class="consent-line consent-light"><input name="consent" type="checkbox" required /> <span>I agree to receive beta updates and accept the <a href="privacy.html">privacy notice</a>.</span></label>
+        </form>
+        <p class="form-status light-status" data-global-status aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer section-shell">
+    <div class="brand footer-brand">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+      <span>Brickwise <strong>AI</strong></span>
+    </div>
+    <p>Independent building-brick software concept. Not affiliated with or endorsed by any toy manufacturer. <a href="privacy.html">Privacy</a></p>
+    <span>© 2026 Brickwise AI</span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>

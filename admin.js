@@ -7,6 +7,7 @@ const loginForm = document.querySelector('#login-form');
 const tokenInput = document.querySelector('#token');
 const loginStatus = document.querySelector('#login-status');
 const dashboardStatus = document.querySelector('#dashboard-status');
+const loginButton = document.querySelector('#login-button');
 
 function getToken() {
   return sessionStorage.getItem(TOKEN_KEY) || '';
@@ -36,10 +37,18 @@ function formatDate(value) {
 }
 
 async function adminFetch(path) {
-  const response = await fetch(path, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-    cache: 'no-store',
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  let response;
+  try {
+    response = await fetch(path, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (response.status === 401) throw new Error('UNAUTHORIZED');
   if (!response.ok) throw new Error('REQUEST_FAILED');
   return response;
@@ -158,7 +167,13 @@ async function loadDashboard() {
       setStatus(loginStatus, 'That token was rejected. Copy the current ADMIN_TOKEN from Railway.', true);
       tokenInput.focus();
     } else {
-      setStatus(dashboardStatus, 'Unable to load the dashboard. Try refreshing.', true);
+      console.error('Dashboard load failed:', error);
+      dashboardView.hidden = true;
+      loginView.hidden = false;
+      const message = error.name === 'AbortError'
+        ? 'The server took too long to respond. Refresh the page and try again.'
+        : 'The dashboard could not load. The page files may be out of sync; deploy v0.4.1.';
+      setStatus(loginStatus, message, true);
     }
   }
 }
@@ -193,8 +208,13 @@ loginForm.addEventListener('submit', async (event) => {
   if (!token) return;
   sessionStorage.setItem(TOKEN_KEY, token);
   setStatus(loginStatus, 'Checking token…');
-  await loadDashboard();
-  tokenInput.value = '';
+  loginButton.disabled = true;
+  try {
+    await loadDashboard();
+    tokenInput.value = '';
+  } finally {
+    loginButton.disabled = false;
+  }
 });
 
 document.querySelector('#refresh-button').addEventListener('click', loadDashboard);

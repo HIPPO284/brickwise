@@ -1,6 +1,6 @@
 {
   "name": "brickwise-validation-site",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Brickwise landing page, validation API, campaign analytics, and admin dashboard",
   "scripts": {

@@ -1,31 +1,27 @@
-# Brickwise AI — Validation Site v0.3
+# Brickwise validation site v0.4
 
-Responsive landing page, SQLite validation backend, and a private browser-based admin dashboard.
+A lightweight Node.js landing page and validation dashboard for testing demand before building the full product.
 
 ## Included
 
-- Email waitlist saved to SQLite
-- Duplicate-email handling
-- Product feedback form
-- Optional feedback follow-up email
-- Consent checkboxes and privacy notice
-- Honeypot spam field and basic rate limiting
-- Hashed network identifier for abuse prevention
-- Private `/admin` dashboard protected by `ADMIN_TOKEN`
-- Summary metrics, recent submissions, demand breakdowns
-- Protected CSV exports from the dashboard
-- No third-party npm dependencies
-
-## Requirements
-
-Use Node.js 24 or newer because the server uses the built-in `node:sqlite` module.
+- Public landing page and research survey
+- SQLite waitlist and feedback storage
+- Persistent Railway-compatible data directory
+- Private `/admin` dashboard
+- Server-side page-view tracking without third-party analytics
+- Approximate daily unique visitors using one-way hashes
+- UTM/source tracking for community campaigns
+- Waitlist conversion rate
+- CSV exports for traffic, waitlist, and feedback
+- Basic rate limiting and honeypot protection
 
 ## Run locally
+
+Requires Node.js 22.13 or newer.
 
 ### Windows CMD
 
 ```cmd
-cd path\to\brickwise-landing
 set ADMIN_TOKEN=replace-with-a-long-random-secret
 npm start
 ```
@@ -34,64 +30,36 @@ Open:
 
 ```text
 http://localhost:8000
-```
-
-Admin dashboard:
-
-```text
 http://localhost:8000/admin
 ```
 
-Enter the same `ADMIN_TOKEN`. The dashboard stores it only in browser `sessionStorage`, not in the URL.
+## Railway
 
-## Railway deployment
-
-Required service variable:
+Set:
 
 ```text
-ADMIN_TOKEN=your-long-random-secret
+ADMIN_TOKEN=<long random secret>
 ```
 
-Persistent Volume mount path:
+Attach a Railway Volume at:
 
 ```text
 /app/data
 ```
 
-The database is stored at:
+## Campaign links
+
+Use different links for each community so the dashboard can attribute traffic and signups:
 
 ```text
-data/brickwise.sqlite
+https://your-domain.example/?utm_source=reddit&utm_campaign=r-lego
+https://your-domain.example/?utm_source=reddit&utm_campaign=r-legotechnic
+https://your-domain.example/?utm_source=discord&utm_campaign=brick-community
+https://your-domain.example/?utm_source=producthunt&utm_campaign=launch
 ```
 
-With Railway's application directory at `/app`, this maps to `/app/data/brickwise.sqlite` on the mounted Volume.
+The dashboard combines source and campaign for signups, for example `reddit:r-lego`.
 
-## Admin API
+## Privacy
 
-Send the token as an Authorization header:
-
-```text
-Authorization: Bearer YOUR_ADMIN_TOKEN
-```
-
-Available endpoints:
-
-- `GET /api/admin/summary`
-- `GET /api/admin/dashboard`
-- `GET /api/admin/waitlist.csv`
-- `GET /api/admin/feedback.csv`
-
-## Security notes
-
-1. Never share or screenshot `ADMIN_TOKEN`.
-2. Replace a token immediately if it is exposed.
-3. The `/admin` HTML is publicly reachable, but no data is returned without the token.
-4. Keep the GitHub repository free of the `data/` directory and `.env` files.
-5. Back up the Railway Volume periodically.
-
-## Before broader public promotion
-
-1. Replace the placeholder operator contact in `privacy.html`.
-2. Review privacy, consent, age, email-marketing, and trademark requirements for target countries.
-3. Do not advertise scanning accuracy until measured on a representative test set.
-4. Avoid implying endorsement by any toy manufacturer or reproducing protected instructions or commercial model designs without permission.
+The site does not use advertising cookies or third-party analytics. It stores page-view metadata and one-way shortened hashes to estimate daily unique visitors. Replace the placeholder operator email in `privacy.html` before a broad public launch.

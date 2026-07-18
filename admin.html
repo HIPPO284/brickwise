@@ -38,7 +38,7 @@
             <span>brickwise</span>
           </a>
           <p class="eyebrow">VALIDATION DASHBOARD</p>
-          <h1>User signals, without the command line.</h1>
+          <h1>Traffic, conversion, and user demand.</h1>
           <p id="updated-at" class="updated-at"></p>
         </div>
         <div class="header-actions">
@@ -47,52 +47,72 @@
         </div>
       </header>
 
-      <section class="metric-grid" aria-label="Key metrics">
+      <section class="metric-grid metric-grid-five" aria-label="Key metrics">
         <article class="metric-card featured">
+          <span>Unique visitors</span>
+          <strong id="visitor-count">—</strong>
+          <small><b id="visitor-week">—</b> in the last 7 days</small>
+        </article>
+        <article class="metric-card">
+          <span>Page views</span>
+          <strong id="pageview-count">—</strong>
+          <small><b id="pageview-week">—</b> in the last 7 days</small>
+        </article>
+        <article class="metric-card">
           <span>Waitlist</span>
           <strong id="waitlist-count">—</strong>
           <small><b id="waitlist-week">—</b> in the last 7 days</small>
+        </article>
+        <article class="metric-card">
+          <span>Waitlist conversion</span>
+          <strong id="conversion-rate">—</strong>
+          <small>Waitlist ÷ unique visitors</small>
         </article>
         <article class="metric-card">
           <span>Feedback responses</span>
           <strong id="feedback-count">—</strong>
           <small><b id="feedback-week">—</b> in the last 7 days</small>
         </article>
-        <article class="metric-card">
-          <span>Top requested problem</span>
-          <strong id="top-problem" class="text-metric">No data yet</strong>
-          <small id="top-problem-count">Waiting for responses</small>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">TRAFFIC</p><h2>Where visitors came from</h2></div></div>
+          <div id="traffic-source-bars" class="bar-list empty-state">No tracked visits yet.</div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">CONVERSION</p><h2>Which sources produced signups</h2></div></div>
+          <div id="signup-source-bars" class="bar-list empty-state">No signups yet.</div>
         </article>
       </section>
 
       <section class="dashboard-grid">
         <article class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">DEMAND</p>
-              <h2>What users want solved</h2>
-            </div>
-          </div>
+          <div class="panel-heading"><div><p class="eyebrow">DEMAND</p><h2>What users want solved</h2></div></div>
           <div id="problem-bars" class="bar-list empty-state">No feedback submitted yet.</div>
         </article>
-
         <article class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">AUDIENCE</p>
-              <h2>Collection sizes</h2>
-            </div>
-          </div>
+          <div class="panel-heading"><div><p class="eyebrow">AUDIENCE</p><h2>Collection sizes</h2></div></div>
           <div id="collection-bars" class="bar-list empty-state">No feedback submitted yet.</div>
         </article>
       </section>
 
       <section class="panel table-panel">
         <div class="panel-heading panel-heading-actions">
-          <div>
-            <p class="eyebrow">WAITLIST</p>
-            <h2>Recent signups</h2>
-          </div>
+          <div><p class="eyebrow">TREND</p><h2>Traffic by day</h2></div>
+          <button id="download-traffic" class="secondary-button" type="button">Download traffic CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Day</th><th>Unique visitors</th><th>Page views</th></tr></thead>
+            <tbody id="traffic-table"><tr><td colspan="3" class="table-empty">Traffic will appear after the next public visit.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading panel-heading-actions">
+          <div><p class="eyebrow">WAITLIST</p><h2>Recent signups</h2></div>
           <button id="download-waitlist" class="secondary-button" type="button">Download CSV</button>
         </div>
         <div class="table-scroll">
@@ -105,10 +125,7 @@
 
       <section class="panel table-panel">
         <div class="panel-heading panel-heading-actions">
-          <div>
-            <p class="eyebrow">RESEARCH</p>
-            <h2>Recent feedback</h2>
-          </div>
+          <div><p class="eyebrow">RESEARCH</p><h2>Recent feedback</h2></div>
           <button id="download-feedback" class="secondary-button" type="button">Download CSV</button>
         </div>
         <div id="feedback-list" class="feedback-list empty-state">No feedback submitted yet.</div>

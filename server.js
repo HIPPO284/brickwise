@@ -34,14 +34,37 @@ db.exec(`
     created_at TEXT NOT NULL,
     ip_hash TEXT
   );
+  CREATE TABLE IF NOT EXISTS page_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_hash TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'direct',
+    campaign TEXT NOT NULL DEFAULT '',
+    path TEXT NOT NULL DEFAULT '/',
+    referrer_host TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    ip_hash TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_page_views_created_at ON page_views(created_at);
+  CREATE INDEX IF NOT EXISTS idx_page_views_source ON page_views(source);
+  CREATE INDEX IF NOT EXISTS idx_page_views_visitor_hash ON page_views(visitor_hash);
 `);
+
+function ensureColumn(table, column, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all().map((row) => row.name);
+  if (!columns.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+ensureColumn('feedback', 'source', "TEXT NOT NULL DEFAULT 'unknown'");
 
 const insertWaitlist = db.prepare(`
   INSERT INTO waitlist (email, source, consent, created_at, ip_hash)
   VALUES (?, ?, ?, ?, ?)
 `);
 const insertFeedback = db.prepare(`
-  INSERT INTO feedback (problem, collection_size, feedback, email, consent, created_at, ip_hash)
+  INSERT INTO feedback (problem, collection_size, feedback, email, consent, created_at, ip_hash, source)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`);
+const insertPageView = db.prepare(`
+  INSERT INTO page_views (visitor_hash, source, campaign, path, referrer_host, created_at, ip_hash)
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `);
 
@@ -49,7 +72,7 @@ const rateBuckets = new Map();
 function rateLimit(ip) {
   const now = Date.now();
   const windowMs = 60_000;
-  const limit = 30;
+  const limit = 45;
   const recent = (rateBuckets.get(ip) || []).filter((time) => now - time < windowMs);
   if (recent.length >= limit) return false;
   recent.push(now);
@@ -63,6 +86,10 @@ function getIp(req) {
 
 function hashIp(ip) {
   return crypto.createHash('sha256').update(`${ip}|brickwise-v1`).digest('hex').slice(0, 24);
+}
+
+function dailyVisitorHash(ip, userAgent, dateKey) {
+  return crypto.createHash('sha256').update(`${ip}|${userAgent}|${dateKey}|brickwise-analytics-v1`).digest('hex').slice(0, 24);
 }
 
 function json(res, status, payload) {
@@ -104,6 +131,11 @@ function isEmail(value) {
 
 function cleanText(value, maxLength) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+function cleanSource(value) {
+  const cleaned = cleanText(value, 80).toLowerCase();
+  return cleaned.replace(/[^a-z0-9._:\/-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'direct';
 }
 
 function authorized(req) {
@@ -169,7 +201,7 @@ function serveStatic(req, res) {
       'Cache-Control': isAdminAsset ? 'no-store' : 'public, max-age=300',
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=() ',
       'Content-Security-Policy': "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     });
     res.end(data);
@@ -179,9 +211,15 @@ function serveStatic(req, res) {
 function getAdminDashboard() {
   const waitlistCount = db.prepare('SELECT COUNT(*) AS count FROM waitlist').get().count;
   const feedbackCount = db.prepare('SELECT COUNT(*) AS count FROM feedback').get().count;
+  const pageViewCount = db.prepare('SELECT COUNT(*) AS count FROM page_views').get().count;
+  const uniqueVisitorCount = db.prepare('SELECT COUNT(DISTINCT visitor_hash) AS count FROM page_views').get().count;
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const waitlistLast7Days = db.prepare('SELECT COUNT(*) AS count FROM waitlist WHERE created_at >= ?').get(since).count;
   const feedbackLast7Days = db.prepare('SELECT COUNT(*) AS count FROM feedback WHERE created_at >= ?').get(since).count;
+  const pageViewsLast7Days = db.prepare('SELECT COUNT(*) AS count FROM page_views WHERE created_at >= ?').get(since).count;
+  const uniqueVisitorsLast7Days = db.prepare('SELECT COUNT(DISTINCT visitor_hash) AS count FROM page_views WHERE created_at >= ?').get(since).count;
+  const conversionRate = uniqueVisitorCount > 0 ? Number(((waitlistCount / uniqueVisitorCount) * 100).toFixed(1)) : 0;
+
   const problems = db.prepare(`
     SELECT problem, COUNT(*) AS count
     FROM feedback
@@ -194,11 +232,18 @@ function getAdminDashboard() {
     GROUP BY collection_size
     ORDER BY count DESC, collection_size ASC
   `).all();
-  const sources = db.prepare(`
+  const signupSources = db.prepare(`
     SELECT source, COUNT(*) AS count
     FROM waitlist
     GROUP BY source
     ORDER BY count DESC, source ASC
+  `).all();
+  const trafficSources = db.prepare(`
+    SELECT source, COUNT(*) AS count
+    FROM page_views
+    GROUP BY source
+    ORDER BY count DESC, source ASC
+    LIMIT 20
   `).all();
   const recentWaitlist = db.prepare(`
     SELECT id, email, source, created_at AS createdAt
@@ -207,23 +252,39 @@ function getAdminDashboard() {
     LIMIT 100
   `).all();
   const recentFeedback = db.prepare(`
-    SELECT id, problem, collection_size AS collectionSize, feedback, email, created_at AS createdAt
+    SELECT id, problem, collection_size AS collectionSize, feedback, email, source, created_at AS createdAt
     FROM feedback
     ORDER BY id DESC
     LIMIT 100
   `).all();
+  const dailyTraffic = db.prepare(`
+    SELECT substr(created_at, 1, 10) AS day,
+           COUNT(*) AS pageViews,
+           COUNT(DISTINCT visitor_hash) AS visitors
+    FROM page_views
+    WHERE created_at >= ?
+    GROUP BY substr(created_at, 1, 10)
+    ORDER BY day ASC
+  `).all(since);
 
   return {
     generatedAt: new Date().toISOString(),
     waitlistCount,
     feedbackCount,
+    pageViewCount,
+    uniqueVisitorCount,
+    conversionRate,
     waitlistLast7Days,
     feedbackLast7Days,
+    pageViewsLast7Days,
+    uniqueVisitorsLast7Days,
     problems,
     collectionSizes,
-    sources,
+    signupSources,
+    trafficSources,
     recentWaitlist,
     recentFeedback,
+    dailyTraffic,
   };
 }
 
@@ -238,7 +299,34 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/health') {
-      json(res, 200, { ok: true, service: 'brickwise-validation-api', version: '0.3.0' });
+      json(res, 200, { ok: true, service: 'brickwise-validation-api', version: '0.4.0' });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/visit') {
+      try {
+        const body = await readJson(req);
+        if (body.website) return json(res, 200, { ok: true });
+        const now = new Date();
+        const dateKey = now.toISOString().slice(0, 10);
+        const userAgent = cleanText(req.headers['user-agent'], 300);
+        const source = cleanSource(body.source || 'direct');
+        const campaign = cleanSource(body.campaign || '').replace(/^direct$/, '');
+        const requestPath = cleanText(body.path, 180) || '/';
+        const referrerHost = cleanSource(body.referrerHost || '').replace(/^direct$/, '');
+        insertPageView.run(
+          dailyVisitorHash(ip, userAgent, dateKey),
+          source,
+          campaign,
+          requestPath,
+          referrerHost,
+          now.toISOString(),
+          hashIp(ip),
+        );
+        json(res, 201, { ok: true });
+      } catch (error) {
+        json(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, { error: 'Unable to record visit.' });
+      }
       return;
     }
 
@@ -247,7 +335,7 @@ const server = http.createServer(async (req, res) => {
         const body = await readJson(req);
         if (body.website) return json(res, 200, { ok: true });
         const email = cleanText(body.email, 254).toLowerCase();
-        const source = cleanText(body.source, 32) || 'unknown';
+        const source = cleanSource(body.source || 'unknown');
         if (!isEmail(email)) return json(res, 400, { error: 'Enter a valid email address.' });
         if (body.consent !== true) return json(res, 400, { error: 'Consent is required.' });
 
@@ -275,13 +363,14 @@ const server = http.createServer(async (req, res) => {
         const collectionSize = cleanText(body.collectionSize, 64);
         const feedback = cleanText(body.feedback, 2000);
         const email = cleanText(body.email, 254).toLowerCase();
+        const source = cleanSource(body.source || 'unknown');
         if (!problem || !collectionSize || feedback.length < 3) {
           return json(res, 400, { error: 'Complete all required feedback fields.' });
         }
         if (email && !isEmail(email)) return json(res, 400, { error: 'Enter a valid optional email.' });
         if (body.consent !== true) return json(res, 400, { error: 'Consent is required.' });
 
-        insertFeedback.run(problem, collectionSize, feedback, email || null, 1, new Date().toISOString(), hashIp(ip));
+        insertFeedback.run(problem, collectionSize, feedback, email || null, 1, new Date().toISOString(), hashIp(ip), source);
         json(res, 201, { ok: true });
       } catch (error) {
         json(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, { error: 'Unable to save your feedback.' });
@@ -295,6 +384,9 @@ const server = http.createServer(async (req, res) => {
       json(res, 200, {
         waitlistCount: dashboard.waitlistCount,
         feedbackCount: dashboard.feedbackCount,
+        pageViewCount: dashboard.pageViewCount,
+        uniqueVisitorCount: dashboard.uniqueVisitorCount,
+        conversionRate: dashboard.conversionRate,
         problems: dashboard.problems,
       });
       return;
@@ -315,8 +407,15 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && url.pathname === '/api/admin/feedback.csv') {
       if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
-      const rows = db.prepare('SELECT id, problem, collection_size, feedback, email, created_at FROM feedback ORDER BY id DESC').all();
-      sendCsv(res, 'brickwise-feedback.csv', ['id', 'problem', 'collection_size', 'feedback', 'email', 'created_at'], rows.map((row) => [row.id, row.problem, row.collection_size, row.feedback, row.email, row.created_at]));
+      const rows = db.prepare('SELECT id, problem, collection_size, feedback, email, source, created_at FROM feedback ORDER BY id DESC').all();
+      sendCsv(res, 'brickwise-feedback.csv', ['id', 'problem', 'collection_size', 'feedback', 'email', 'source', 'created_at'], rows.map((row) => [row.id, row.problem, row.collection_size, row.feedback, row.email, row.source, row.created_at]));
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/traffic.csv') {
+      if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
+      const rows = db.prepare('SELECT id, visitor_hash, source, campaign, path, referrer_host, created_at FROM page_views ORDER BY id DESC').all();
+      sendCsv(res, 'brickwise-traffic.csv', ['id', 'visitor_hash', 'source', 'campaign', 'path', 'referrer_host', 'created_at'], rows.map((row) => [row.id, row.visitor_hash, row.source, row.campaign, row.path, row.referrer_host, row.created_at]));
       return;
     }
 

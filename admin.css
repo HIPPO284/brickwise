@@ -61,6 +61,7 @@ h1, h2, strong { font-family: "Manrope", sans-serif; }
 .secondary-button:hover, .ghost-button:hover { border-color: #cfd1d9; }
 
 .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.metric-grid-five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .metric-card { min-height: 190px; padding: 26px; background: white; border: 1px solid var(--line); border-radius: var(--radius); }
 .metric-card.featured { color: white; background: var(--ink); border-color: var(--ink); }
 .metric-card > span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
@@ -101,10 +102,13 @@ td:first-child { font-weight: 600; }
 .feedback-meta { display: flex; flex-wrap: wrap; gap: 14px; }
 .dashboard-status { text-align: center; }
 
+@media (max-width: 1180px) {
+  .metric-grid-five { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 850px) {
   .dashboard-header { align-items: flex-start; flex-direction: column; }
   .dashboard-header .brand { margin-bottom: 36px; }
-  .metric-grid, .dashboard-grid { grid-template-columns: 1fr; }
+  .metric-grid, .metric-grid-five, .dashboard-grid { grid-template-columns: 1fr; }
   .metric-card { min-height: 160px; }
 }
 @media (max-width: 560px) {

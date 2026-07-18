@@ -1,12 +1,12 @@
 {
   "name": "brickwise-validation-site",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "Brickwise AI landing page with a zero-dependency Node.js, SQLite validation backend, and private admin dashboard.",
+  "description": "Brickwise landing page, validation API, campaign analytics, and admin dashboard",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=22.13.0"
   }
 }

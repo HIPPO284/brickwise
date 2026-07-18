@@ -18,6 +18,29 @@ async function postJson(url, payload) {
   return data;
 }
 
+function getTracking() {
+  const params = new URLSearchParams(location.search);
+  const source = params.get('utm_source') || params.get('source') || 'direct';
+  const campaign = params.get('utm_campaign') || '';
+  let referrerHost = '';
+  try {
+    referrerHost = document.referrer ? new URL(document.referrer).hostname : '';
+  } catch {
+    referrerHost = '';
+  }
+  const combinedSource = campaign ? `${source}:${campaign}` : source;
+  return { source, campaign, combinedSource, referrerHost };
+}
+
+const tracking = getTracking();
+postJson('/api/visit', {
+  source: tracking.source,
+  campaign: tracking.campaign,
+  path: location.pathname,
+  referrerHost: tracking.referrerHost,
+  website: '',
+}).catch(() => {});
+
 document.querySelectorAll('[data-waitlist-form]').forEach((form) => {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -31,9 +54,13 @@ document.querySelectorAll('[data-waitlist-form]').forEach((form) => {
     button.textContent = 'Joining…';
 
     try {
+      const formLocation = form.dataset.source || 'unknown';
+      const source = tracking.combinedSource === 'direct'
+        ? `direct:${formLocation}`
+        : tracking.combinedSource;
       const result = await postJson('/api/waitlist', {
         email: emailInput.value.trim(),
-        source: form.dataset.source || 'unknown',
+        source,
         consent: consentInput.checked,
         website: form.querySelector('input[name="website"]')?.value || '',
       });
@@ -66,6 +93,7 @@ researchForm.addEventListener('submit', async (event) => {
     const formData = Object.fromEntries(new FormData(researchForm).entries());
     await postJson('/api/feedback', {
       ...formData,
+      source: tracking.combinedSource,
       consent: formData.consent === 'on',
     });
     document.getElementById('research-status').textContent = 'Feedback received. Thank you for shaping the beta.';

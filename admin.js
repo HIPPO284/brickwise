@@ -45,10 +45,10 @@ async function adminFetch(path) {
   return response;
 }
 
-function renderBars(container, items, labelKey) {
+function renderBars(container, items, labelKey, emptyMessage = 'No data yet.') {
   if (!items.length) {
     container.className = 'bar-list empty-state';
-    container.textContent = 'No feedback submitted yet.';
+    container.textContent = emptyMessage;
     return;
   }
   const maximum = Math.max(...items.map((item) => Number(item.count) || 0), 1);
@@ -96,14 +96,34 @@ function renderFeedback(rows) {
       <p>${escapeHtml(row.feedback)}</p>
       <div class="feedback-meta">
         <span>Collection: ${escapeHtml(row.collectionSize)}</span>
+        <span>Source: ${escapeHtml(row.source || 'unknown')}</span>
         <span>Contact: ${escapeHtml(row.email || 'Not provided')}</span>
       </div>
     </article>`).join('');
 }
 
+function renderTrafficTrend(rows) {
+  const body = document.querySelector('#traffic-table');
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="3" class="table-empty">Traffic will appear after the next public visit.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.day)}</td>
+      <td>${escapeHtml(row.visitors)}</td>
+      <td>${escapeHtml(row.pageViews)}</td>
+    </tr>`).join('');
+}
+
 function renderDashboard(data) {
+  document.querySelector('#visitor-count').textContent = data.uniqueVisitorCount;
+  document.querySelector('#pageview-count').textContent = data.pageViewCount;
   document.querySelector('#waitlist-count').textContent = data.waitlistCount;
   document.querySelector('#feedback-count').textContent = data.feedbackCount;
+  document.querySelector('#conversion-rate').textContent = `${data.conversionRate}%`;
+  document.querySelector('#visitor-week').textContent = data.uniqueVisitorsLast7Days;
+  document.querySelector('#pageview-week').textContent = data.pageViewsLast7Days;
   document.querySelector('#waitlist-week').textContent = data.waitlistLast7Days;
   document.querySelector('#feedback-week').textContent = data.feedbackLast7Days;
   document.querySelector('#updated-at').textContent = `Updated ${formatDate(data.generatedAt)}`;
@@ -112,8 +132,11 @@ function renderDashboard(data) {
   document.querySelector('#top-problem').textContent = topProblem?.problem || 'No data yet';
   document.querySelector('#top-problem-count').textContent = topProblem ? `${topProblem.count} response${topProblem.count === 1 ? '' : 's'}` : 'Waiting for responses';
 
-  renderBars(document.querySelector('#problem-bars'), data.problems, 'problem');
-  renderBars(document.querySelector('#collection-bars'), data.collectionSizes, 'collectionSize');
+  renderBars(document.querySelector('#traffic-source-bars'), data.trafficSources, 'source', 'No tracked visits yet.');
+  renderBars(document.querySelector('#signup-source-bars'), data.signupSources, 'source', 'No signups yet.');
+  renderBars(document.querySelector('#problem-bars'), data.problems, 'problem', 'No feedback submitted yet.');
+  renderBars(document.querySelector('#collection-bars'), data.collectionSizes, 'collectionSize', 'No feedback submitted yet.');
+  renderTrafficTrend(data.dailyTraffic);
   renderWaitlist(data.recentWaitlist);
   renderFeedback(data.recentFeedback);
 }
@@ -181,5 +204,6 @@ document.querySelector('#logout-button').addEventListener('click', () => {
 });
 document.querySelector('#download-waitlist').addEventListener('click', () => downloadCsv('/api/admin/waitlist.csv', 'brickwise-waitlist.csv'));
 document.querySelector('#download-feedback').addEventListener('click', () => downloadCsv('/api/admin/feedback.csv', 'brickwise-feedback.csv'));
+document.querySelector('#download-traffic').addEventListener('click', () => downloadCsv('/api/admin/traffic.csv', 'brickwise-traffic.csv'));
 
 if (getToken()) loadDashboard();

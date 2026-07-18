@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 const PORT = Number(process.env.PORT || 8000);
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'change-this-before-public-launch';
 const MAX_BODY_BYTES = 32 * 1024;
@@ -49,7 +49,7 @@ const rateBuckets = new Map();
 function rateLimit(ip) {
   const now = Date.now();
   const windowMs = 60_000;
-  const limit = 20;
+  const limit = 30;
   const recent = (rateBuckets.get(ip) || []).filter((time) => now - time < windowMs);
   if (recent.length >= limit) return false;
   recent.push(now);
@@ -108,7 +108,10 @@ function cleanText(value, maxLength) {
 
 function authorized(req) {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '') || '';
-  return token.length > 0 && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(ADMIN_TOKEN));
+  const expected = Buffer.from(ADMIN_TOKEN);
+  const supplied = Buffer.from(token);
+  if (supplied.length === 0 || supplied.length !== expected.length) return false;
+  return crypto.timingSafeEqual(supplied, expected);
 }
 
 function csvEscape(value) {
@@ -117,12 +120,13 @@ function csvEscape(value) {
 }
 
 function sendCsv(res, filename, headers, rows) {
-  const body = [headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+  const body = `\uFEFF${[headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n')}`;
   res.writeHead(200, {
     'Content-Type': 'text/csv; charset=utf-8',
     'Content-Disposition': `attachment; filename="${filename}"`,
     'Content-Length': Buffer.byteLength(body),
     'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
   });
   res.end(body);
 }
@@ -141,20 +145,28 @@ const mimeTypes = {
 
 function serveStatic(req, res) {
   const rawPath = new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname;
-  const requestPath = rawPath === '/' ? '/index.html' : rawPath;
+  let requestPath = rawPath === '/' ? '/index.html' : rawPath;
+  if (rawPath === '/admin' || rawPath === '/admin/') requestPath = '/admin.html';
+
   const resolved = path.normalize(path.join(ROOT, requestPath));
-  if (!resolved.startsWith(ROOT) || resolved.includes(`${path.sep}data${path.sep}`)) {
+  const relativePath = path.relative(ROOT, resolved);
+  const escapesRoot = relativePath.startsWith('..') || path.isAbsolute(relativePath);
+  const targetsDataDirectory = relativePath === 'data' || relativePath.startsWith(`data${path.sep}`);
+  if (escapesRoot || targetsDataDirectory) {
     json(res, 403, { error: 'Forbidden' });
     return;
   }
+
   fs.readFile(resolved, (error, data) => {
     if (error) {
       json(res, 404, { error: 'Not found' });
       return;
     }
+    const isAdminAsset = requestPath.startsWith('/admin');
     res.writeHead(200, {
       'Content-Type': mimeTypes[path.extname(resolved)] || 'application/octet-stream',
       'Content-Length': data.length,
+      'Cache-Control': isAdminAsset ? 'no-store' : 'public, max-age=300',
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
@@ -164,100 +176,166 @@ function serveStatic(req, res) {
   });
 }
 
+function getAdminDashboard() {
+  const waitlistCount = db.prepare('SELECT COUNT(*) AS count FROM waitlist').get().count;
+  const feedbackCount = db.prepare('SELECT COUNT(*) AS count FROM feedback').get().count;
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const waitlistLast7Days = db.prepare('SELECT COUNT(*) AS count FROM waitlist WHERE created_at >= ?').get(since).count;
+  const feedbackLast7Days = db.prepare('SELECT COUNT(*) AS count FROM feedback WHERE created_at >= ?').get(since).count;
+  const problems = db.prepare(`
+    SELECT problem, COUNT(*) AS count
+    FROM feedback
+    GROUP BY problem
+    ORDER BY count DESC, problem ASC
+  `).all();
+  const collectionSizes = db.prepare(`
+    SELECT collection_size AS collectionSize, COUNT(*) AS count
+    FROM feedback
+    GROUP BY collection_size
+    ORDER BY count DESC, collection_size ASC
+  `).all();
+  const sources = db.prepare(`
+    SELECT source, COUNT(*) AS count
+    FROM waitlist
+    GROUP BY source
+    ORDER BY count DESC, source ASC
+  `).all();
+  const recentWaitlist = db.prepare(`
+    SELECT id, email, source, created_at AS createdAt
+    FROM waitlist
+    ORDER BY id DESC
+    LIMIT 100
+  `).all();
+  const recentFeedback = db.prepare(`
+    SELECT id, problem, collection_size AS collectionSize, feedback, email, created_at AS createdAt
+    FROM feedback
+    ORDER BY id DESC
+    LIMIT 100
+  `).all();
+
+  return {
+    generatedAt: new Date().toISOString(),
+    waitlistCount,
+    feedbackCount,
+    waitlistLast7Days,
+    feedbackLast7Days,
+    problems,
+    collectionSizes,
+    sources,
+    recentWaitlist,
+    recentFeedback,
+  };
+}
+
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const ip = getIp(req);
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const ip = getIp(req);
 
-  if (url.pathname.startsWith('/api/') && !rateLimit(ip)) {
-    json(res, 429, { error: 'Too many requests. Please try again shortly.' });
-    return;
-  }
+    if (url.pathname.startsWith('/api/') && !rateLimit(ip)) {
+      json(res, 429, { error: 'Too many requests. Please try again shortly.' });
+      return;
+    }
 
-  if (req.method === 'GET' && url.pathname === '/api/health') {
-    json(res, 200, { ok: true, service: 'brickwise-validation-api' });
-    return;
-  }
+    if (req.method === 'GET' && url.pathname === '/api/health') {
+      json(res, 200, { ok: true, service: 'brickwise-validation-api', version: '0.3.0' });
+      return;
+    }
 
-  if (req.method === 'POST' && url.pathname === '/api/waitlist') {
-    try {
-      const body = await readJson(req);
-      if (body.website) return json(res, 200, { ok: true });
-      const email = cleanText(body.email, 254).toLowerCase();
-      const source = cleanText(body.source, 32) || 'unknown';
-      if (!isEmail(email)) return json(res, 400, { error: 'Enter a valid email address.' });
-      if (body.consent !== true) return json(res, 400, { error: 'Consent is required.' });
-
+    if (req.method === 'POST' && url.pathname === '/api/waitlist') {
       try {
-        insertWaitlist.run(email, source, 1, new Date().toISOString(), hashIp(ip));
-        json(res, 201, { ok: true, status: 'created' });
-      } catch (error) {
-        if (String(error.message).includes('UNIQUE')) {
-          json(res, 200, { ok: true, status: 'existing' });
-        } else {
-          throw error;
+        const body = await readJson(req);
+        if (body.website) return json(res, 200, { ok: true });
+        const email = cleanText(body.email, 254).toLowerCase();
+        const source = cleanText(body.source, 32) || 'unknown';
+        if (!isEmail(email)) return json(res, 400, { error: 'Enter a valid email address.' });
+        if (body.consent !== true) return json(res, 400, { error: 'Consent is required.' });
+
+        try {
+          insertWaitlist.run(email, source, 1, new Date().toISOString(), hashIp(ip));
+          json(res, 201, { ok: true, status: 'created' });
+        } catch (error) {
+          if (String(error.message).includes('UNIQUE')) {
+            json(res, 200, { ok: true, status: 'existing' });
+          } else {
+            throw error;
+          }
         }
+      } catch (error) {
+        json(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, { error: 'Unable to save your request.' });
       }
-    } catch (error) {
-      json(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, { error: 'Unable to save your request.' });
+      return;
     }
-    return;
-  }
 
-  if (req.method === 'POST' && url.pathname === '/api/feedback') {
-    try {
-      const body = await readJson(req);
-      if (body.website) return json(res, 200, { ok: true });
-      const problem = cleanText(body.problem, 100);
-      const collectionSize = cleanText(body.collectionSize, 64);
-      const feedback = cleanText(body.feedback, 2000);
-      const email = cleanText(body.email, 254).toLowerCase();
-      if (!problem || !collectionSize || feedback.length < 3) {
-        return json(res, 400, { error: 'Complete all required feedback fields.' });
+    if (req.method === 'POST' && url.pathname === '/api/feedback') {
+      try {
+        const body = await readJson(req);
+        if (body.website) return json(res, 200, { ok: true });
+        const problem = cleanText(body.problem, 100);
+        const collectionSize = cleanText(body.collectionSize, 64);
+        const feedback = cleanText(body.feedback, 2000);
+        const email = cleanText(body.email, 254).toLowerCase();
+        if (!problem || !collectionSize || feedback.length < 3) {
+          return json(res, 400, { error: 'Complete all required feedback fields.' });
+        }
+        if (email && !isEmail(email)) return json(res, 400, { error: 'Enter a valid optional email.' });
+        if (body.consent !== true) return json(res, 400, { error: 'Consent is required.' });
+
+        insertFeedback.run(problem, collectionSize, feedback, email || null, 1, new Date().toISOString(), hashIp(ip));
+        json(res, 201, { ok: true });
+      } catch (error) {
+        json(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, { error: 'Unable to save your feedback.' });
       }
-      if (email && !isEmail(email)) return json(res, 400, { error: 'Enter a valid optional email.' });
-      if (body.consent !== true) return json(res, 400, { error: 'Consent is required.' });
-
-      insertFeedback.run(problem, collectionSize, feedback, email || null, 1, new Date().toISOString(), hashIp(ip));
-      json(res, 201, { ok: true });
-    } catch (error) {
-      json(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, { error: 'Unable to save your feedback.' });
+      return;
     }
-    return;
-  }
 
-  if (req.method === 'GET' && url.pathname === '/api/admin/summary') {
-    if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
-    const waitlistCount = db.prepare('SELECT COUNT(*) AS count FROM waitlist').get().count;
-    const feedbackCount = db.prepare('SELECT COUNT(*) AS count FROM feedback').get().count;
-    const problems = db.prepare('SELECT problem, COUNT(*) AS count FROM feedback GROUP BY problem ORDER BY count DESC').all();
-    json(res, 200, { waitlistCount, feedbackCount, problems });
-    return;
-  }
+    if (req.method === 'GET' && url.pathname === '/api/admin/summary') {
+      if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
+      const dashboard = getAdminDashboard();
+      json(res, 200, {
+        waitlistCount: dashboard.waitlistCount,
+        feedbackCount: dashboard.feedbackCount,
+        problems: dashboard.problems,
+      });
+      return;
+    }
 
-  if (req.method === 'GET' && url.pathname === '/api/admin/waitlist.csv') {
-    if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
-    const rows = db.prepare('SELECT id, email, source, created_at FROM waitlist ORDER BY id DESC').all();
-    sendCsv(res, 'brickwise-waitlist.csv', ['id', 'email', 'source', 'created_at'], rows.map((r) => [r.id, r.email, r.source, r.created_at]));
-    return;
-  }
+    if (req.method === 'GET' && url.pathname === '/api/admin/dashboard') {
+      if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
+      json(res, 200, getAdminDashboard());
+      return;
+    }
 
-  if (req.method === 'GET' && url.pathname === '/api/admin/feedback.csv') {
-    if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
-    const rows = db.prepare('SELECT id, problem, collection_size, feedback, email, created_at FROM feedback ORDER BY id DESC').all();
-    sendCsv(res, 'brickwise-feedback.csv', ['id', 'problem', 'collection_size', 'feedback', 'email', 'created_at'], rows.map((r) => [r.id, r.problem, r.collection_size, r.feedback, r.email, r.created_at]));
-    return;
-  }
+    if (req.method === 'GET' && url.pathname === '/api/admin/waitlist.csv') {
+      if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
+      const rows = db.prepare('SELECT id, email, source, created_at FROM waitlist ORDER BY id DESC').all();
+      sendCsv(res, 'brickwise-waitlist.csv', ['id', 'email', 'source', 'created_at'], rows.map((row) => [row.id, row.email, row.source, row.created_at]));
+      return;
+    }
 
-  if (req.method === 'GET') {
-    serveStatic(req, res);
-    return;
-  }
+    if (req.method === 'GET' && url.pathname === '/api/admin/feedback.csv') {
+      if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' });
+      const rows = db.prepare('SELECT id, problem, collection_size, feedback, email, created_at FROM feedback ORDER BY id DESC').all();
+      sendCsv(res, 'brickwise-feedback.csv', ['id', 'problem', 'collection_size', 'feedback', 'email', 'created_at'], rows.map((row) => [row.id, row.problem, row.collection_size, row.feedback, row.email, row.created_at]));
+      return;
+    }
 
-  json(res, 405, { error: 'Method not allowed' });
+    if (req.method === 'GET') {
+      serveStatic(req, res);
+      return;
+    }
+
+    json(res, 405, { error: 'Method not allowed' });
+  } catch (error) {
+    console.error('Unhandled request error:', error);
+    if (!res.headersSent) json(res, 500, { error: 'Internal server error' });
+    else res.end();
+  }
 });
 
 server.listen(PORT, () => {
   console.log(`Brickwise running at http://localhost:${PORT}`);
+  console.log(`Database directory: ${DATA_DIR}`);
   if (ADMIN_TOKEN === 'change-this-before-public-launch') {
     console.warn('WARNING: Set ADMIN_TOKEN before public deployment.');
   }

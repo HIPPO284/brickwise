@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>Brickwise Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <section id="login-view" class="login-card" aria-labelledby="login-title">
+      <a class="brand" href="/" aria-label="Return to Brickwise home">
+        <span class="brand-mark" aria-hidden="true">B</span>
+        <span>brickwise</span>
+      </a>
+      <p class="eyebrow">PRIVATE ADMIN</p>
+      <h1 id="login-title">Open your validation dashboard.</h1>
+      <p class="login-copy">Enter the current Railway <code>ADMIN_TOKEN</code>. It stays in this browser tab only and is never added to the URL.</p>
+      <form id="login-form" class="login-form">
+        <label for="token">Admin token</label>
+        <div class="token-row">
+          <input id="token" name="token" type="password" autocomplete="current-password" required placeholder="Paste ADMIN_TOKEN" />
+          <button type="submit">Open dashboard</button>
+        </div>
+        <p id="login-status" class="status" role="status"></p>
+      </form>
+    </section>
+
+    <section id="dashboard-view" class="dashboard" hidden>
+      <header class="dashboard-header">
+        <div>
+          <a class="brand" href="/" aria-label="Return to Brickwise home">
+            <span class="brand-mark" aria-hidden="true">B</span>
+            <span>brickwise</span>
+          </a>
+          <p class="eyebrow">VALIDATION DASHBOARD</p>
+          <h1>User signals, without the command line.</h1>
+          <p id="updated-at" class="updated-at"></p>
+        </div>
+        <div class="header-actions">
+          <button id="refresh-button" class="secondary-button" type="button">Refresh</button>
+          <button id="logout-button" class="ghost-button" type="button">Lock dashboard</button>
+        </div>
+      </header>
+
+      <section class="metric-grid" aria-label="Key metrics">
+        <article class="metric-card featured">
+          <span>Waitlist</span>
+          <strong id="waitlist-count">—</strong>
+          <small><b id="waitlist-week">—</b> in the last 7 days</small>
+        </article>
+        <article class="metric-card">
+          <span>Feedback responses</span>
+          <strong id="feedback-count">—</strong>
+          <small><b id="feedback-week">—</b> in the last 7 days</small>
+        </article>
+        <article class="metric-card">
+          <span>Top requested problem</span>
+          <strong id="top-problem" class="text-metric">No data yet</strong>
+          <small id="top-problem-count">Waiting for responses</small>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">DEMAND</p>
+              <h2>What users want solved</h2>
+            </div>
+          </div>
+          <div id="problem-bars" class="bar-list empty-state">No feedback submitted yet.</div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">AUDIENCE</p>
+              <h2>Collection sizes</h2>
+            </div>
+          </div>
+          <div id="collection-bars" class="bar-list empty-state">No feedback submitted yet.</div>
+        </article>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading panel-heading-actions">
+          <div>
+            <p class="eyebrow">WAITLIST</p>
+            <h2>Recent signups</h2>
+          </div>
+          <button id="download-waitlist" class="secondary-button" type="button">Download CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Email</th><th>Source</th><th>Submitted</th></tr></thead>
+            <tbody id="waitlist-table"><tr><td colspan="3" class="table-empty">No signups yet.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading panel-heading-actions">
+          <div>
+            <p class="eyebrow">RESEARCH</p>
+            <h2>Recent feedback</h2>
+          </div>
+          <button id="download-feedback" class="secondary-button" type="button">Download CSV</button>
+        </div>
+        <div id="feedback-list" class="feedback-list empty-state">No feedback submitted yet.</div>
+      </section>
+
+      <p id="dashboard-status" class="status dashboard-status" role="status"></p>
+    </section>
+  </main>
+  <script src="/admin.js" defer></script>
+</body>
+</html>

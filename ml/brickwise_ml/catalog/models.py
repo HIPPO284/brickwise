@@ -106,5 +106,31 @@ class PartRecord(BaseModel):
         if not isinstance(value, str) or not value.strip(): raise ValueError("must be a non-empty string")
         return value.strip()
 
+
+class BetaSelectionInfo(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    category_group: str
+    reason: str
+    unresolved_review_issues: list[str] = Field(default_factory=list)
+
+class BetaSelectionEntry(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    part: PartRecord
+    selection: BetaSelectionInfo
+
+class BetaSelectionOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    catalog_version: Literal["v1"]
+    target_count: int
+    selected_count: int
+    blocked: bool
+    category_counts: dict[str, int]
+    required_design_ids: list[str]
+    required_blockers: list[str]
+    records: list[PartRecord]
+    entries: list[BetaSelectionEntry]
+    rejected: list[dict]
+    blockers: list[str]
+
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)

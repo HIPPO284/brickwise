@@ -17,7 +17,7 @@ def _value(row, *names):
     return ""
 
 def import_csv(parts_csv: Path, output: Path, dry_run=False) -> dict:
-    retrieved = datetime.now(timezone.utc).isoformat()
+    retrieved = datetime.fromtimestamp(parts_csv.stat().st_mtime, timezone.utc).isoformat()\n    imported_at = datetime.now(timezone.utc).isoformat()
     records, errors, duplicates, conflicts = [], [], [], {}
     with parts_csv.open(newline="", encoding="utf-8-sig") as f:
         for line_no,row in enumerate(csv.DictReader(f), 2):
@@ -51,7 +51,7 @@ def import_csv(parts_csv: Path, output: Path, dry_run=False) -> dict:
     result={"schema_version":"1.0","catalog_version":"v1",
              "records":[r.model_dump(mode="json") for r in sorted(records,key=lambda x:x.design_id)],
              "import_report":{"source_file":str(parts_csv),"source_sha256":sha256_file(parts_csv),
-                              "retrieved_at":retrieved,"record_count":len(records),"errors":errors,
+                              "retrieved_at":retrieved,"imported_at":imported_at,"record_count":len(records),"errors":errors,
                               "duplicates":sorted(set(duplicates)),"conflicts":conflicts}}
     if not dry_run:
         output.parent.mkdir(parents=True,exist_ok=True)

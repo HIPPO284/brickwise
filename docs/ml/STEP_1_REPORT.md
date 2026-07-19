@@ -10,4 +10,4 @@ Candidate 41239: blocked pending permitted metadata and LDraw evidence. It is no
 
 Production: no Node production files, routes, SQLite data, environment variables, or Railway configuration were modified. CUSTOM_MODEL_ENABLED remains false by policy and no PyTorch dependency was added.
 
-Required next input: provide a permitted Rebrickable CSV export and a licensed LDraw Parts Library path. Then run the documented import, validation, LDraw report, and beta selection commands. No model training occurs in Step 1.
+Validation executed: Python 3.13.2 syntax compilation passed; reconstructed offline Step 1 suite passed 7 tests. The repository's baseline has no Node test script or test directory, so no existing Node test command was available to run.\n\nRequired next input: provide a permitted Rebrickable CSV export and a licensed LDraw Parts Library path. Then run the documented import, validation, LDraw report, and beta selection commands. No model training occurs in Step 1.

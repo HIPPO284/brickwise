@@ -8,13 +8,13 @@ Previous validation reference:
 - Current head tested: 7ca1107ef760c204257bb2418925dc90cf4ccd6a
 - GitHub Actions run: 29686291755
 
-Validation after this cleanup is reported below once the new branch head completes CI:
-- Python 3.11 GitHub Actions: pending
-- Python 3.12 GitHub Actions: pending
-- compileall on committed ml/brickwise_ml and ml/tests: pending
-- node --check server.js: pending
-- production smoke: /api/health, /, /admin, /privacy: pending
-- pytest: 45 baseline tests plus cleanup tests: pending
+Validation after this cleanup (code head 0d021d12fc31fe1f74e42d31db96e138601cb943; Actions run 29687143332):
+- Python 3.11 GitHub Actions: passed
+- Python 3.12 GitHub Actions: passed
+- compileall on committed ml/brickwise_ml and ml/tests: passed
+- node --check server.js: passed
+- production smoke: /api/health 200, / 200, /admin 200, /privacy 200
+- pytest: 50 tests passed (45 baseline tests plus 5 cleanup tests)
 
 Counts: verified catalog records 0; planned records 0; beta_v1 records 0; rejected 0; review_required 0. These are truthful blocker counts, not fabricated catalog output.
 

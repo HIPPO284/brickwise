@@ -39,7 +39,12 @@ async function main() {
     if (Object.values(results).some((status) => status !== 200)) process.exitCode = 1;
   } finally {
     child.kill('SIGTERM');
-    fs.rmSync(dataDir, { recursive: true, force: true });
+    await new Promise((resolve) => {
+      const timeout = setTimeout(resolve, 2000);
+      child.once('exit', () => { clearTimeout(timeout); resolve(); });
+    });
+    try { fs.rmSync(dataDir, { recursive: true, force: true }); }
+    catch (error) { console.error('temporary data cleanup failed', error); process.exitCode = 1; }
   }
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

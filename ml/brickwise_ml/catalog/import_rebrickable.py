@@ -17,7 +17,8 @@ def _value(row, *names):
     return ""
 
 def import_csv(parts_csv: Path, output: Path, dry_run=False) -> dict:
-    retrieved = datetime.fromtimestamp(parts_csv.stat().st_mtime, timezone.utc).isoformat()\n    imported_at = datetime.now(timezone.utc).isoformat()
+    retrieved = datetime.fromtimestamp(parts_csv.stat().st_mtime, timezone.utc).isoformat()
+    imported_at = datetime.now(timezone.utc).isoformat()
     records, errors, duplicates, conflicts = [], [], [], {}
     with parts_csv.open(newline="", encoding="utf-8-sig") as f:
         for line_no,row in enumerate(csv.DictReader(f), 2):

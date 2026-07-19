@@ -1,0 +1,4 @@
+part_num,name,category,image_url
+TEST-0001,TEST FIXTURE ONLY brick,Basic Brick,https://invalid.example/image.png
+TEST-0002,TEST FIXTURE ONLY plate,Plate,https://invalid.example/image.png
+TEST-0002,TEST FIXTURE ONLY duplicate,Plate,https://invalid.example/image.png

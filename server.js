@@ -179,6 +179,7 @@ function serveStatic(req, res) {
   const rawPath = new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname;
   let requestPath = rawPath === '/' ? '/index.html' : rawPath;
   if (rawPath === '/admin' || rawPath === '/admin/') requestPath = '/admin.html';
+  if (rawPath === '/privacy' || rawPath === '/privacy/') requestPath = '/privacy.html';
 
   const resolved = path.normalize(path.join(ROOT, requestPath));
   const relativePath = path.relative(ROOT, resolved);

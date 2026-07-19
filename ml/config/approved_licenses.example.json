@@ -1,0 +1,6 @@
+{
+  "accepted_exact_strings": ["Licensed under CC BY 4.0"],
+  "rejected_exact_strings": [],
+  "review_required_patterns": ["non-commercial", "unknown"],
+  "default_action": "review_required"
+}

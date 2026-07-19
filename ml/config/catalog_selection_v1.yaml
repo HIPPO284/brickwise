@@ -1,0 +1,38 @@
+catalog_target_count: 100
+beta_target_count: 20
+
+excluded_categories:
+  - Minifig
+  - Sticker
+  - Electronics
+  - Flexible
+  - Assembly
+
+# Raw Rebrickable labels must be mapped explicitly to abstract policy groups.
+# Unknown labels remain review_required until this map is extended and reviewed.
+category_group_mapping:
+  Basic Brick: basic_brick
+  Brick: basic_brick
+  Plate: plate_tile
+  Tile: plate_tile
+  Slope: slope_modified
+  Modified Brick: slope_modified
+  Modified Plate: slope_modified
+  Technic Liftarm: technic_liftarm
+  Technic Pin: technic_pin
+  Technic Axle: technic_axle
+  Technic Gear: technic_gear
+  Technic Connector: technic_connector
+
+beta_category_targets:
+  basic_brick: 4
+  plate_tile: 4
+  slope_modified: 3
+  technic_liftarm: 3
+  technic_pin: 2
+  technic_axle: 2
+  technic_gear: 1
+  technic_connector: 1
+
+required_design_ids:
+  - "41239"

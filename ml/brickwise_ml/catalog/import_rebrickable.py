@@ -50,7 +50,8 @@ def _read_colors(path: Path | None) -> dict[str, list[dict]]:
 def import_csv(parts_csv: Path, output: Path, colors_csv: Path | None = None,
                dry_run: bool = False, timestamp: str | None = None,
                report_output: Path | None = None) -> dict:
-    if isinstance(colors_csv, bool):\n        dry_run, colors_csv = colors_csv, None\n    retrieved_at = deterministic_timestamp(parts_csv, timestamp)
+    if isinstance(colors_csv, bool):
+        dry_run, colors_csv = colors_csv, None\n    retrieved_at = deterministic_timestamp(parts_csv, timestamp)
     imported_at = retrieved_at
     source_hash = sha256_file(parts_csv)
     color_map = _read_colors(colors_csv)

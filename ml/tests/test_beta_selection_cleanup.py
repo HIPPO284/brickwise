@@ -67,6 +67,7 @@ def _record(design_id: str, category: str) -> dict:
 
 
 def _run(tmp_path: Path, records: list[dict], mapping: dict, quotas: dict, target: int) -> dict:
+    tmp_path.mkdir(parents=True, exist_ok=True)
     catalog = tmp_path / "catalog.json"
     report = tmp_path / "ldraw.json"
     config = tmp_path / "config.yaml"

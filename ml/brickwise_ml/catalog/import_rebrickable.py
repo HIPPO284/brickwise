@@ -47,9 +47,7 @@ def import_csv(parts_csv: Path, output: Path, dry_run=False) -> dict:
                 provenance={"created_at":stamp,"updated_at":stamp,"created_by":"importer",
                             "notes":["Imported from permitted metadata CSV; image fields ignored."]}
             ))
-    for key,names in conflicts.items():
-        if len(set(names))>1: conflicts[key]=names
-        else: del conflicts[key]
+    conflicts = {key: names for key, names in conflicts.items() if len(set(names)) > 1}
     result={"schema_version":"1.0","catalog_version":"v1",
              "records":[r.model_dump(mode="json") for r in sorted(records,key=lambda x:x.design_id)],
              "import_report":{"source_file":str(parts_csv),"source_sha256":sha256_file(parts_csv),

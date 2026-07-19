@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brickwise-ml-foundation"
+version = "0.1.0"
+description = "Offline-first catalog, provenance, and LDraw validation foundation for Brickwise"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.6,<3",
+  "jsonschema>=4.21,<5",
+  "PyYAML>=6.0,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0,<9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.setuptools.packages.find]
+include = ["brickwise_ml*"]

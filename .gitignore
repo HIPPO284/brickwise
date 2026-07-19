@@ -1,0 +1,26 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Production data
+data/*.sqlite
+data/*.sqlite-*
+ml/data/raw/
+ml/data/downloads/
+ml/data/user_uploads/
+ml/artifacts/
+ml/checkpoints/
+ml/runs/
+ml/.venv/
+ml/**/__pycache__/
+ml/.pytest_cache/
+*.pt
+*.pth
+*.onnx
+*.zip
+*.7z
+
+# Local LDraw archives
+*.mpd~
+*.ldr~

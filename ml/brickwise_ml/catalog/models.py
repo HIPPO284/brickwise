@@ -78,6 +78,11 @@ class Provenance(BaseModel):
     updated_at: datetime
     created_by: Literal["importer", "manual_review"]
     notes: list[str] = Field(default_factory=list)
+    @field_validator("created_at", "updated_at")
+    @classmethod
+    def timezone_required(cls, value):
+        if value.tzinfo is None or value.utcoffset() is None: raise ValueError("timestamp must include timezone")
+        return value
 
 class PartRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -95,11 +100,6 @@ class PartRecord(BaseModel):
     supported_colors: list[Color] = Field(default_factory=list)
     recognition: Recognition
     provenance: Provenance
-    @field_validator("created_at", "updated_at")
-    @classmethod
-    def provenance_timezone_required(cls, value):
-        if value.tzinfo is None or value.utcoffset() is None: raise ValueError("timestamp must include timezone")
-        return value
     @field_validator("design_id", "name", "category")
     @classmethod
     def non_empty(cls, value):

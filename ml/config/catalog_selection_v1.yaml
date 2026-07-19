@@ -1,0 +1,10 @@
+catalog_target_count: 100
+beta_target_count: 20
+excluded_categories:
+  - Minifig
+  - Sticker
+  - Electronics
+  - Flexible
+  - Assembly
+required_design_ids:
+  - "41239"

@@ -131,8 +131,8 @@ def test_schema_rejects_invalid_sha256():
     with pytest.raises(Exception):
         PartRecord.model_validate(record)
 
-def test_json_schema_and_pydantic_agree():
-    path = Path("/tmp/catalog-agreement.json")
+def test_json_schema_and_pydantic_agree(tmp_path):
+    path = tmp_path / "catalog-agreement.json"
     path.write_text(json.dumps({"records": [_record()]}), encoding="utf-8")
     assert validate_catalog(path)["valid"]
 

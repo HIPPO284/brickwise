@@ -50,7 +50,7 @@ def _read_colors(path: Path | None) -> dict[str, list[dict]]:
 def import_csv(parts_csv: Path, output: Path, colors_csv: Path | None = None,
                dry_run: bool = False, timestamp: str | None = None,
                report_output: Path | None = None) -> dict:
-    retrieved_at = deterministic_timestamp(parts_csv, timestamp)
+    if isinstance(colors_csv, bool):\n        dry_run, colors_csv = colors_csv, None\n    retrieved_at = deterministic_timestamp(parts_csv, timestamp)
     imported_at = retrieved_at
     source_hash = sha256_file(parts_csv)
     color_map = _read_colors(colors_csv)
@@ -105,7 +105,7 @@ def import_csv(parts_csv: Path, output: Path, colors_csv: Path | None = None,
                           "retrieved_at": retrieved_at, "imported_at": imported_at,
                           "record_count": len(records_json), "errors": errors,
                           "duplicates": sorted(set(duplicates)), "conflicts": conflicts,
-                          "image_fields_ignored": sorted(IMAGE_FIELDS), "network_requests": 0}
+                          "image_fields_ignored_count": len(IMAGE_FIELDS), "network_requests": 0}
     }
     serialized = json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if report_output:

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brickwise.local/schema/part_catalog.v1.json",
+  "title": "Brickwise Part Catalog Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","catalog_version","design_id","name","aliases","category","subcategory","source","ldraw","geometry","visual_features","supported_colors","recognition","provenance"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "catalog_version": {"const": "v1"},
+    "design_id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "aliases": {"type": "array", "items": {"type": "string"}},
+    "category": {"type": "string", "minLength": 1},
+    "subcategory": {"type": ["string","null"]},
+    "source": {"$ref": "#/$defs/source"},
+    "ldraw": {"$ref": "#/$defs/ldraw"},
+    "geometry": {"$ref": "#/$defs/geometry"},
+    "visual_features": {"$ref": "#/$defs/visual_features"},
+    "supported_colors": {"type": "array", "items": {"$ref": "#/$defs/color"}},
+    "recognition": {"$ref": "#/$defs/recognition"},
+    "provenance": {"$ref": "#/$defs/provenance"}
+  },
+  "$defs": {
+    "source": {"type":"object","additionalProperties":false,"required":["provider","source_record_id","retrieved_at","source_version","source_sha256"],"properties":{"provider":{"enum":["rebrickable_csv","rebrickable_api","manual_verified"]},"source_record_id":{"type":["string","null"]},"retrieved_at":{"type":"string","format":"date-time"},"source_version":{"type":["string","null"]},"source_sha256":{"type":["string","null"]}}},
+    "ldraw": {"type":"object","additionalProperties":false,"required":["filename","file_sha256","header_name","license_raw","license_status","attribution_required","validation_status"],"properties":{"filename":{"type":["string","null"]},"file_sha256":{"type":["string","null"]},"header_name":{"type":["string","null"]},"license_raw":{"type":["string","null"]},"license_status":{"enum":["accepted","rejected","review_required","missing"]},"attribution_required":{"type":"boolean"},"validation_status":{"enum":["valid","invalid","missing","review_required"]}}},
+    "geometry": {"type":"object","additionalProperties":false,"required":["length_studs","width_studs","height_plates","bounding_box_ldu","geometry_source"],"properties":{"length_studs":{"type":["number","null"]},"width_studs":{"type":["number","null"]},"height_plates":{"type":["number","null"]},"bounding_box_ldu":{"type":"object"},"geometry_source":{"enum":["ldraw_computed","manually_verified","unknown"]}}},
+    "visual_features": {"type":"object","additionalProperties":false,"required":["stud_count","round_hole_count","axle_hole_count","pin_hole_count","is_curved","is_flexible","is_printed","is_assembly","feature_source"],"properties":{"stud_count":{"type":["integer","null"]},"round_hole_count":{"type":["integer","null"]},"axle_hole_count":{"type":["integer","null"]},"pin_hole_count":{"type":["integer","null"]},"is_curved":{"type":["boolean","null"]},"is_flexible":{"type":["boolean","null"]},"is_printed":{"type":["boolean","null"]},"is_assembly":{"type":["boolean","null"]},"feature_source":{"enum":["computed","manually_verified","unknown"]}}},
+    "color": {"type":"object","additionalProperties":false,"required":["color_id","color_name","source"],"properties":{"color_id":{"type":"string"},"color_name":{"type":"string"},"source":{"type":"string"}}},
+    "recognition": {"type":"object","additionalProperties":false,"required":["status","difficulty","exclusion_reason"],"properties":{"status":{"enum":["beta_v1","planned","excluded","review_required"]},"difficulty":{"enum":["easy","medium","hard","unknown"]},"exclusion_reason":{"type":["string","null"]}}},
+    "provenance": {"type":"object","additionalProperties":false,"required":["created_at","updated_at","created_by","notes"],"properties":{"created_at":{"type":"string","format":"date-time"},"updated_at":{"type":"string","format":"date-time"},"created_by":{"enum":["importer","manual_review"]},"notes":{"type":"array","items":{"type":"string"}}}}
+  }
+}

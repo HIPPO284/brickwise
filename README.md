@@ -1,8 +1,29 @@
-# Brickwise AI — Validation Site v0.3
+# Brickwise
 
-Responsive landing page, SQLite validation backend, and a private browser-based admin dashboard.
+An ongoing project exploring photo-based brick recognition and build recommendations.
 
-## Included
+## Project Status
+
+Work in progress. This repository currently contains a product validation website and Python data-preparation tools. The vision model is not yet implemented; model training, recognition accuracy, and end-to-end scanning have not been validated.
+
+The committed catalog examples are empty fixtures. They do not represent a verified real-world parts dataset.
+
+## Current Implementation
+
+- Website: collect waitlist registrations and product feedback, with a SQLite backend and a token-protected administration dashboard.
+- Data preparation: import parts metadata from CSV, validate catalog records, check LDraw file dependencies and license policies, and select eligible parts.
+- Supporting tools: file hashing, provenance records, environment checks, and foundation tests.
+
+See [the ML documentation](ml/README.md) for the data workflow and its current limitations.
+
+## Technology
+
+- Website: HTML, CSS, JavaScript, Node.js, and SQLite.
+- Data foundation: Python, Pydantic, JSON Schema, and pytest.
+
+The recognition and build-recommendation features described by the product concept remain development goals.
+
+## Website Features
 
 - Email waitlist saved to SQLite
 - Duplicate-email handling
@@ -14,7 +35,7 @@ Responsive landing page, SQLite validation backend, and a private browser-based 
 - Private `/admin` dashboard protected by `ADMIN_TOKEN`
 - Summary metrics, recent submissions, demand breakdowns
 - Protected CSV exports from the dashboard
-- No third-party npm dependencies
+- The website backend uses Node.js built-in modules, without third-party npm dependencies.
 
 ## Requirements
 
